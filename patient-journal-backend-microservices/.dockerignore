@@ -1,0 +1,38 @@
+springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Git ###
+.git
+.gitignore
+.gitattributes
+
+### Docker ###
+docker-compose.yml
+docker-compose.dev.yml
+
+### Documentation ###
+*.md
+HELP.md
+
+### Kubernetes ###
+k8s/
+
+### Logs ###
+*.log
+
+### OS ###
+.DS_Store
+Thumbs.db
