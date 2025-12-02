@@ -6,8 +6,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+import se.kth.lab3.patient_journal_backend_microservices.config.TestSecurityConfig;
 import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 import se.kth.lab3.patient_journal_backend_microservices.entity.Patient;
 import se.kth.lab3.patient_journal_backend_microservices.repository.PatientRepository;
@@ -21,6 +26,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
 
