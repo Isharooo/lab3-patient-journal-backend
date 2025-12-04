@@ -17,7 +17,6 @@ import se.kth.lab3.patient_journal_backend_microservices.service.PatientService;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
