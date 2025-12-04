@@ -38,8 +38,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
-                        // Skyddade endpoints - kräver autentisering
+                        // Patient endpoints (inkl. Kafka)
                         .requestMatchers("/api/patients/**").hasAnyRole("DOCTOR", "STAFF", "PATIENT")
+                        .requestMatchers("/api/kafka/patients/**").hasAnyRole("DOCTOR", "STAFF")
+
+                        // Journal endpoints
+                        .requestMatchers("/api/journal-entries/**").hasAnyRole("DOCTOR", "STAFF")
                         .requestMatchers("/api/encounters/**").hasAnyRole("DOCTOR", "STAFF")
                         .requestMatchers("/api/observations/**").hasAnyRole("DOCTOR", "STAFF")
                         .requestMatchers("/api/conditions/**").hasAnyRole("DOCTOR", "STAFF")
