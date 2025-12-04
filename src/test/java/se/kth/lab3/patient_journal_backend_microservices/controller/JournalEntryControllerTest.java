@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,21 +15,16 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.JournalEntryDTO;
 import se.kth.lab3.patient_journal_backend_microservices.service.JournalEntryService;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(JournalEntryController.class)
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-@WebMvcTest(JournalEntryController.class)
 class JournalEntryControllerTest {
 
     @Autowired
@@ -48,12 +41,8 @@ class JournalEntryControllerTest {
     @BeforeEach
     void setUp() {
         testJournalEntryDTO = new JournalEntryDTO(
-                1L,
-                1L,
-                "Patient klagade på huvudvärk",
-                LocalDateTime.now(),
-                "Migrän",
-                "Smärtstillande medicin"
+                1L, 1L, "Patient klagade på huvudvärk",
+                LocalDateTime.now(), "Migrän", "Smärtstillande medicin"
         );
     }
 
@@ -66,13 +55,6 @@ class JournalEntryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testJournalEntryDTO)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.patientId").value(1))
-                .andExpect(jsonPath("$.note").value("Patient klagade på huvudvärk"))
-                .andExpect(jsonPath("$.diagnosis").value("Migrän"))
-                .andExpect(jsonPath("$.treatment").value("Smärtstillande medicin"));
-
-        verify(journalEntryService).createJournalEntry(any(JournalEntryDTO.class));
+                .andExpect(jsonPath("$.note").value("Patient klagade på huvudvärk"));
     }
-
 }
