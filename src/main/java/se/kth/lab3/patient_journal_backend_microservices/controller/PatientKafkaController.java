@@ -13,13 +13,6 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
  * Controller för att skicka patient-kommandon via Kafka.
  *
  * Detta demonstrerar Lab3-kravet: operationer som triggas via Kafka istället för REST.
- *
- * Flödet:
- * 1. Klient skickar kommando till denna endpoint
- * 2. Kommandot publiceras till Kafka topic "patient.commands"
- * 3. PatientCommandConsumer lyssnar på topic och utför operationen
- *
- * Alternativt kan kommandon skickas direkt till Kafka från andra tjänster/system.
  */
 @RestController
 @RequestMapping("/api/kafka/patients")
@@ -28,20 +21,19 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 @CrossOrigin(origins = "*")
 public class PatientKafkaController {
 
-    private final KafkaTemplate<String, PatientCommandDTO> kafkaTemplate;
+    private final KafkaTemplate<String, PatientCommandDTO> commandKafkaTemplate;
 
     @Value("${kafka.topic.patient-commands}")
     private String patientCommandsTopic;
 
     /**
      * Skickar ett CREATE-kommando via Kafka för att skapa en patient.
-     * Operationen utförs asynkront av Kafka Consumer.
      */
     @PostMapping
     public ResponseEntity<String> createPatientViaKafka(@RequestBody PatientDTO patientDTO) {
         PatientCommandDTO command = new PatientCommandDTO("CREATE", null, patientDTO);
 
-        kafkaTemplate.send(patientCommandsTopic, command);
+        commandKafkaTemplate.send(patientCommandsTopic, command);
         log.info("=== Kafka: Skickade CREATE-kommando för patient: {} {} ===",
                 patientDTO.getFirstName(), patientDTO.getLastName());
 
@@ -59,7 +51,7 @@ public class PatientKafkaController {
 
         PatientCommandDTO command = new PatientCommandDTO("UPDATE", id, patientDTO);
 
-        kafkaTemplate.send(patientCommandsTopic, id.toString(), command);
+        commandKafkaTemplate.send(patientCommandsTopic, id.toString(), command);
         log.info("=== Kafka: Skickade UPDATE-kommando för patient ID: {} ===", id);
 
         return ResponseEntity.accepted()
@@ -73,7 +65,7 @@ public class PatientKafkaController {
     public ResponseEntity<String> deletePatientViaKafka(@PathVariable Long id) {
         PatientCommandDTO command = new PatientCommandDTO("DELETE", id, null);
 
-        kafkaTemplate.send(patientCommandsTopic, id.toString(), command);
+        commandKafkaTemplate.send(patientCommandsTopic, id.toString(), command);
         log.info("=== Kafka: Skickade DELETE-kommando för patient ID: {} ===", id);
 
         return ResponseEntity.accepted()

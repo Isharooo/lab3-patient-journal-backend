@@ -1,6 +1,6 @@
 package se.kth.lab3.patient_journal_backend_microservices.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PatientService {
 
@@ -22,6 +21,13 @@ public class PatientService {
 
     @Value("${kafka.topic.patient}")
     private String patientTopic;
+
+    public PatientService(
+            PatientRepository patientRepository,
+            @Qualifier("patientKafkaTemplate") KafkaTemplate<String, PatientDTO> kafkaTemplate) {
+        this.patientRepository = patientRepository;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public PatientDTO createPatient(PatientDTO patientDTO) {
         if (patientRepository.existsByPersonalNumber(patientDTO.getPersonalNumber())) {
@@ -33,8 +39,12 @@ public class PatientService {
         PatientDTO dto = convertToDTO(savedPatient);
 
         // Send event to Kafka
-        kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-        System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic);
+        try {
+            kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
+            System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic);
+        } catch (Exception e) {
+            System.err.println("=== Kafka: Kunde inte skicka patient-händelse: " + e.getMessage());
+        }
 
         return dto;
     }
@@ -66,8 +76,12 @@ public class PatientService {
         PatientDTO dto = convertToDTO(updatedPatient);
 
         // Send update event to Kafka
-        kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-        System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic);
+        try {
+            kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
+            System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic);
+        } catch (Exception e) {
+            System.err.println("=== Kafka: Kunde inte skicka patient-uppdaterings-händelse: " + e.getMessage());
+        }
 
         return dto;
     }

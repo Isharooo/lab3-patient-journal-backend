@@ -1,6 +1,7 @@
 package se.kth.lab3.patient_journal_backend_microservices.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class JournalEntryService {
 
@@ -25,6 +25,15 @@ public class JournalEntryService {
 
     @Value("${kafka.topic.journal}")
     private String journalTopic;
+
+    public JournalEntryService(
+            JournalEntryRepository journalEntryRepository,
+            PatientRepository patientRepository,
+            @Qualifier("journalKafkaTemplate") KafkaTemplate<String, JournalEntryDTO> kafkaTemplate) {
+        this.journalEntryRepository = journalEntryRepository;
+        this.patientRepository = patientRepository;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public JournalEntryDTO createJournalEntry(JournalEntryDTO journalEntryDTO) {
         Patient patient = patientRepository.findById(journalEntryDTO.getPatientId())
@@ -36,8 +45,12 @@ public class JournalEntryService {
         JournalEntryDTO dto = convertToDTO(savedEntry);
 
         // Send event to Kafka
-        kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
-        System.out.println("=== Kafka: Skickade journal-händelse till topic: " + journalTopic);
+        try {
+            kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
+            System.out.println("=== Kafka: Skickade journal-händelse till topic: " + journalTopic);
+        } catch (Exception e) {
+            System.err.println("=== Kafka: Kunde inte skicka journal-händelse: " + e.getMessage());
+        }
 
         return dto;
     }
@@ -75,8 +88,12 @@ public class JournalEntryService {
         JournalEntryDTO dto = convertToDTO(updatedEntry);
 
         // Send update event to Kafka
-        kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
-        System.out.println("=== Kafka: Skickade journal-uppdaterings-händelse till topic: " + journalTopic);
+        try {
+            kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
+            System.out.println("=== Kafka: Skickade journal-uppdaterings-händelse till topic: " + journalTopic);
+        } catch (Exception e) {
+            System.err.println("=== Kafka: Kunde inte skicka journal-uppdaterings-händelse: " + e.getMessage());
+        }
 
         return dto;
     }

@@ -17,7 +17,9 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.FixedBackOff;
+import se.kth.lab3.patient_journal_backend_microservices.dto.JournalEntryDTO;
 import se.kth.lab3.patient_journal_backend_microservices.dto.PatientCommandDTO;
+import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -69,22 +71,45 @@ public class KafkaConfig {
 
     // ==================== PRODUCER CONFIG ====================
 
-    @Bean
-    public ProducerFactory<String, Object> producerFactory() {
+    private Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        // Snabbare timeout för att inte blockera appen
         props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 5000);
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);
         props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 10000);
-        return new DefaultKafkaProducerFactory<>(props);
+        return props;
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public ProducerFactory<String, PatientDTO> patientProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, PatientDTO> patientKafkaTemplate() {
+        return new KafkaTemplate<>(patientProducerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, JournalEntryDTO> journalProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, JournalEntryDTO> journalKafkaTemplate() {
+        return new KafkaTemplate<>(journalProducerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, PatientCommandDTO> commandProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, PatientCommandDTO> commandKafkaTemplate() {
+        return new KafkaTemplate<>(commandProducerFactory());
     }
 
     // ==================== CONSUMER CONFIG ====================
@@ -97,7 +122,6 @@ public class KafkaConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        // Snabbare timeout
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
         props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
         props.put(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, 10000);
@@ -120,12 +144,10 @@ public class KafkaConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
 
-        // Felhantering - försök igen med backoff
         factory.setCommonErrorHandler(new DefaultErrorHandler(
-                new FixedBackOff(1000L, 3L)  // 1 sekund mellan försök, max 3 försök
+                new FixedBackOff(1000L, 3L)
         ));
 
-        // Starta inte listener direkt om Kafka inte är tillgänglig
         factory.getContainerProperties().setMissingTopicsFatal(false);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
 
