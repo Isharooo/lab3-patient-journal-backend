@@ -35,7 +35,8 @@ spec:
                   key: password
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               value: "update"
-            # Kafka configuration
+            # Kafka configuration - använd intern cbhcloud service-namn
+            # OBS: Ändra detta till rätt hostname för din Kafka-instans
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service1:9092"
           resources:
@@ -49,11 +50,13 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 5
+            timeoutSeconds: 5

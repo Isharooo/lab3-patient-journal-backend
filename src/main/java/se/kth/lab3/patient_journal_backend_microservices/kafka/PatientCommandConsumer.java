@@ -29,7 +29,8 @@ public class PatientCommandConsumer {
     @KafkaListener(
             topics = "${kafka.topic.patient-commands}",
             groupId = "${spring.kafka.consumer.group-id}",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "kafkaListenerContainerFactory",
+            autoStartup = "${kafka.consumer.auto-startup:true}"
     )
     public void handlePatientCommand(PatientCommandDTO command) {
         log.info("=== Kafka Consumer: Mottog kommando: {} ===", command.getCommandType());
