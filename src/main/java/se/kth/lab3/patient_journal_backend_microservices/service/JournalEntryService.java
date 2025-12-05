@@ -1,6 +1,5 @@
 package se.kth.lab3.patient_journal_backend_microservices.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -23,7 +22,7 @@ public class JournalEntryService {
     private final PatientRepository patientRepository;
     private final KafkaTemplate<String, JournalEntryDTO> kafkaTemplate;
 
-    @Value("${kafka.topic.journal}")
+    @Value("${kafka.topic.journal:journal.events}")
     private String journalTopic;
 
     public JournalEntryService(
@@ -44,12 +43,12 @@ public class JournalEntryService {
 
         JournalEntryDTO dto = convertToDTO(savedEntry);
 
-        // Send event to Kafka
+        // Skicka event till Kafka
         try {
             kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
-            System.out.println("=== Kafka: Skickade journal-händelse till topic: " + journalTopic);
+            System.out.println("=== Kafka: Skickade journal-händelse till topic: " + journalTopic + " ===");
         } catch (Exception e) {
-            System.err.println("=== Kafka: Kunde inte skicka journal-händelse: " + e.getMessage());
+            System.err.println("=== Kafka: Kunde inte skicka journal-händelse: " + e.getMessage() + " ===");
         }
 
         return dto;
@@ -87,12 +86,12 @@ public class JournalEntryService {
         JournalEntry updatedEntry = journalEntryRepository.save(entry);
         JournalEntryDTO dto = convertToDTO(updatedEntry);
 
-        // Send update event to Kafka
+        // Skicka uppdateringsevent till Kafka
         try {
             kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
-            System.out.println("=== Kafka: Skickade journal-uppdaterings-händelse till topic: " + journalTopic);
+            System.out.println("=== Kafka: Skickade journal-uppdaterings-händelse till topic: " + journalTopic + " ===");
         } catch (Exception e) {
-            System.err.println("=== Kafka: Kunde inte skicka journal-uppdaterings-händelse: " + e.getMessage());
+            System.err.println("=== Kafka: Kunde inte skicka journal-uppdaterings-händelse: " + e.getMessage() + " ===");
         }
 
         return dto;

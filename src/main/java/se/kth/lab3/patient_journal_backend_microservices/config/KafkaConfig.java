@@ -1,6 +1,5 @@
 package se.kth.lab3.patient_journal_backend_microservices.config;
 
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -8,9 +7,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
@@ -24,50 +23,22 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Kafka Producer och Consumer konfiguration.
+ *
+ * Denna klass konfigurerar Kafka producers och consumers.
+ * Den är beroende av EmbeddedKafkaConfig som startar den inbäddade Kafka-brokern.
+ */
 @Configuration
 @EnableKafka
+@DependsOn("embeddedKafkaBroker")
 public class KafkaConfig {
 
-    @Value("${kafka.topic.patient}")
-    private String patientTopic;
-
-    @Value("${kafka.topic.journal}")
-    private String journalTopic;
-
-    @Value("${kafka.topic.patient-commands}")
-    private String patientCommandsTopic;
-
-    @Value("${spring.kafka.bootstrap-servers}")
+    @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.consumer.group-id}")
+    @Value("${spring.kafka.consumer.group-id:patient-journal-group}")
     private String groupId;
-
-    // ==================== TOPICS ====================
-
-    @Bean
-    public NewTopic patientEventsTopic() {
-        return TopicBuilder.name(patientTopic)
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    public NewTopic journalEventsTopic() {
-        return TopicBuilder.name(journalTopic)
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    public NewTopic patientCommandsTopic() {
-        return TopicBuilder.name(patientCommandsTopic)
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
 
     // ==================== PRODUCER CONFIG ====================
 
@@ -122,9 +93,6 @@ public class KafkaConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
-        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-        props.put(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, 10000);
 
         JsonDeserializer<PatientCommandDTO> deserializer = new JsonDeserializer<>(PatientCommandDTO.class);
         deserializer.setRemoveTypeHeaders(false);

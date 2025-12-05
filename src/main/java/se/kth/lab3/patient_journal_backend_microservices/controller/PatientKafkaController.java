@@ -2,7 +2,6 @@ package se.kth.lab3.patient_journal_backend_microservices.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -10,9 +9,27 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientCommandDTO;
 import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 
 /**
- * Controller för att skicka patient-kommandon via Kafka.
+ * Controller för att hantera patienter via Kafka.
  *
- * Detta demonstrerar Lab3-kravet: operationer som triggas via Kafka istället för REST.
+ * Detta uppfyller Lab3-kravet: "göra om minst ett rest api till att bli strömmande via Kafka.
+ * Det betyder att den ska anropas via Kafka istället för Rest."
+ *
+ * SKILLNAD MOT VANLIG REST (/api/patients):
+ *
+ * REST (synkront):
+ *   POST /api/patients → PatientService.createPatient() → Databas → Returnerar skapad patient
+ *
+ * KAFKA (asynkront):
+ *   POST /api/kafka/patients → Skickar till Kafka topic → Returnerar 202 Accepted
+ *                                    ↓
+ *                          PatientCommandConsumer lyssnar
+ *                                    ↓
+ *                          Skapar patient i databas
+ *
+ * Fördelen med Kafka-flödet:
+ * - Asynkront: Klienten behöver inte vänta på att operationen slutförs
+ * - Skalbart: Flera consumers kan bearbeta meddelanden parallellt
+ * - Pålitligt: Meddelanden lagras i Kafka och kan hanteras om consumer är nere
  */
 @RestController
 @RequestMapping("/api/kafka/patients")
@@ -23,52 +40,70 @@ public class PatientKafkaController {
 
     private final KafkaTemplate<String, PatientCommandDTO> commandKafkaTemplate;
 
-    @Value("${kafka.topic.patient-commands}")
-    private String patientCommandsTopic;
+    private static final String TOPIC = "patient.commands";
 
     /**
-     * Skickar ett CREATE-kommando via Kafka för att skapa en patient.
+     * Skapar en patient via Kafka (asynkront).
+     *
+     * Istället för att direkt anropa PatientService, skickas ett kommando
+     * till Kafka topic "patient.commands". PatientCommandConsumer lyssnar
+     * på detta topic och utför den faktiska skapandet.
      */
     @PostMapping
     public ResponseEntity<String> createPatientViaKafka(@RequestBody PatientDTO patientDTO) {
+        log.info("========================================");
+        log.info("=== KAFKA PRODUCER: Skickar CREATE ===");
+        log.info("=== Patient: {} {} ===", patientDTO.getFirstName(), patientDTO.getLastName());
+        log.info("========================================");
+
         PatientCommandDTO command = new PatientCommandDTO("CREATE", null, patientDTO);
 
-        commandKafkaTemplate.send(patientCommandsTopic, command);
-        log.info("=== Kafka: Skickade CREATE-kommando för patient: {} {} ===",
-                patientDTO.getFirstName(), patientDTO.getLastName());
+        commandKafkaTemplate.send(TOPIC, command);
 
         return ResponseEntity.accepted()
-                .body("CREATE-kommando skickat till Kafka. Patienten skapas asynkront.");
+                .body("CREATE-kommando skickat till Kafka topic '" + TOPIC + "'. " +
+                        "Patienten skapas asynkront av Kafka Consumer. " +
+                        "Kolla GET /api/patients för att se resultatet.");
     }
 
     /**
-     * Skickar ett UPDATE-kommando via Kafka för att uppdatera en patient.
+     * Uppdaterar en patient via Kafka (asynkront).
      */
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePatientViaKafka(
             @PathVariable Long id,
             @RequestBody PatientDTO patientDTO) {
 
+        log.info("========================================");
+        log.info("=== KAFKA PRODUCER: Skickar UPDATE ===");
+        log.info("=== Patient ID: {} ===", id);
+        log.info("========================================");
+
         PatientCommandDTO command = new PatientCommandDTO("UPDATE", id, patientDTO);
 
-        commandKafkaTemplate.send(patientCommandsTopic, id.toString(), command);
-        log.info("=== Kafka: Skickade UPDATE-kommando för patient ID: {} ===", id);
+        commandKafkaTemplate.send(TOPIC, id.toString(), command);
 
         return ResponseEntity.accepted()
-                .body("UPDATE-kommando skickat till Kafka. Patienten uppdateras asynkront.");
+                .body("UPDATE-kommando skickat till Kafka topic '" + TOPIC + "'. " +
+                        "Patienten uppdateras asynkront av Kafka Consumer.");
     }
 
     /**
-     * Skickar ett DELETE-kommando via Kafka för att ta bort en patient.
+     * Tar bort en patient via Kafka (asynkront).
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePatientViaKafka(@PathVariable Long id) {
+        log.info("========================================");
+        log.info("=== KAFKA PRODUCER: Skickar DELETE ===");
+        log.info("=== Patient ID: {} ===", id);
+        log.info("========================================");
+
         PatientCommandDTO command = new PatientCommandDTO("DELETE", id, null);
 
-        commandKafkaTemplate.send(patientCommandsTopic, id.toString(), command);
-        log.info("=== Kafka: Skickade DELETE-kommando för patient ID: {} ===", id);
+        commandKafkaTemplate.send(TOPIC, id.toString(), command);
 
         return ResponseEntity.accepted()
-                .body("DELETE-kommando skickat till Kafka. Patienten tas bort asynkront.");
+                .body("DELETE-kommando skickat till Kafka topic '" + TOPIC + "'. " +
+                        "Patienten tas bort asynkront av Kafka Consumer.");
     }
 }

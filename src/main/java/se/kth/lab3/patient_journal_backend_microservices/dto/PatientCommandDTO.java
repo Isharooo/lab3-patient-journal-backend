@@ -5,8 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO för att skicka kommandon via Kafka istället för REST.
- * Används för att trigga operationer på patienter via Kafka-meddelanden.
+ * DTO för Kafka-kommandon för patient-operationer.
+ *
+ * Denna klass representerar meddelanden som skickas via Kafka.
+ *
+ * CommandType kan vara:
+ * - "CREATE": Skapar en ny patient
+ * - "UPDATE": Uppdaterar en befintlig patient
+ * - "DELETE": Tar bort en patient
  */
 @Data
 @NoArgsConstructor
@@ -14,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class PatientCommandDTO {
 
     /**
-     * Typ av kommando: CREATE, UPDATE, DELETE
+     * Typ av kommando: CREATE, UPDATE, eller DELETE
      */
     private String commandType;
 

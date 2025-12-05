@@ -38,8 +38,10 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
-                        // Patient endpoints (inkl. Kafka)
+                        // Patient endpoints (REST)
                         .requestMatchers("/api/patients/**").hasAnyRole("DOCTOR", "STAFF", "PATIENT")
+
+                        // Kafka endpoints (asynkron patient-hantering via Kafka)
                         .requestMatchers("/api/kafka/patients/**").hasAnyRole("DOCTOR", "STAFF")
 
                         // Journal endpoints
@@ -65,15 +67,11 @@ public class SecurityConfig {
         return converter;
     }
 
-    /**
-     * Konverterar Keycloak realm_access.roles till Spring Security GrantedAuthorities
-     */
     static class KeycloakRealmRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
         @Override
         public Collection<GrantedAuthority> convert(Jwt jwt) {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
 
-            // Hämta realm roles från JWT
             Map<String, Object> realmAccess = jwt.getClaim("realm_access");
             if (realmAccess != null) {
                 Object rolesObj = realmAccess.get("roles");

@@ -11,9 +11,19 @@ import se.kth.lab3.patient_journal_backend_microservices.repository.PatientRepos
 
 /**
  * Kafka Consumer som lyssnar på patient.commands topic.
- * Detta ersätter REST-anrop för att skapa/uppdatera/ta bort patienter.
  *
- * Uppfyller Lab3-kravet: "göra om minst ett rest api till att bli strömmande via Kafka"
+ * Detta uppfyller Lab3-kravet: "göra om minst ett rest api till att bli strömmande via Kafka.
+ * Det betyder att den ska anropas via Kafka istället för Rest."
+ *
+ * FLÖDET:
+ * 1. PatientKafkaController tar emot HTTP-request och skickar kommando till Kafka topic
+ * 2. Denna consumer LYSSNAR på Kafka topic "patient.commands"
+ * 3. När meddelande kommer → Consumer utför operationen (CREATE/UPDATE/DELETE)
+ * 4. Patient skapas/uppdateras/tas bort baserat på Kafka-meddelandet
+ *
+ * SKILLNAD MOT REST:
+ * - REST: Synkront - PatientController → PatientService → Databas → Svar
+ * - Kafka: Asynkront - Controller → Kafka Topic → Consumer → Databas (inget direkt svar)
  */
 @Service
 @RequiredArgsConstructor
@@ -23,17 +33,21 @@ public class PatientCommandConsumer {
     private final PatientRepository patientRepository;
 
     /**
-     * Lyssnar på patient.commands topic och utför CRUD-operationer
-     * baserat på kommandotyp - istället för via REST API.
+     * Lyssnar på patient.commands topic och utför CRUD-operationer.
+     *
+     * Detta är "Consumer"-delen av Kafka-flödet.
+     * Meddelanden skickas hit från PatientKafkaController via Kafka.
      */
     @KafkaListener(
-            topics = "${kafka.topic.patient-commands}",
-            groupId = "${spring.kafka.consumer.group-id}",
-            containerFactory = "kafkaListenerContainerFactory",
-            autoStartup = "${kafka.consumer.auto-startup:true}"
+            topics = "patient.commands",
+            groupId = "patient-journal-group",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void handlePatientCommand(PatientCommandDTO command) {
-        log.info("=== Kafka Consumer: Mottog kommando: {} ===", command.getCommandType());
+        log.info("========================================");
+        log.info("=== KAFKA CONSUMER: Mottog kommando ===");
+        log.info("=== Typ: {} ===", command.getCommandType());
+        log.info("========================================");
 
         try {
             switch (command.getCommandType().toUpperCase()) {
@@ -50,7 +64,7 @@ public class PatientCommandConsumer {
                     log.warn("Okänd kommandotyp: {}", command.getCommandType());
             }
         } catch (Exception e) {
-            log.error("Fel vid hantering av kommando: {}", e.getMessage(), e);
+            log.error("Fel vid hantering av Kafka-kommando: {}", e.getMessage(), e);
         }
     }
 
@@ -77,7 +91,7 @@ public class PatientCommandConsumer {
         );
 
         Patient saved = patientRepository.save(patient);
-        log.info("CREATE: Patient skapad via Kafka med ID: {}", saved.getId());
+        log.info("=== KAFKA: Patient skapad via Kafka med ID: {} ===", saved.getId());
     }
 
     private void handleUpdate(Long patientId, PatientDTO patientDTO) {
@@ -95,7 +109,7 @@ public class PatientCommandConsumer {
                     patient.setPhoneNumber(patientDTO.getPhoneNumber());
                     patient.setAddress(patientDTO.getAddress());
                     patientRepository.save(patient);
-                    log.info("UPDATE: Patient uppdaterad via Kafka med ID: {}", patientId);
+                    log.info("=== KAFKA: Patient uppdaterad via Kafka med ID: {} ===", patientId);
                 },
                 () -> log.warn("UPDATE: Patient med ID {} finns inte", patientId)
         );
@@ -109,7 +123,7 @@ public class PatientCommandConsumer {
 
         if (patientRepository.existsById(patientId)) {
             patientRepository.deleteById(patientId);
-            log.info("DELETE: Patient borttagen via Kafka med ID: {}", patientId);
+            log.info("=== KAFKA: Patient borttagen via Kafka med ID: {} ===", patientId);
         } else {
             log.warn("DELETE: Patient med ID {} finns inte", patientId);
         }

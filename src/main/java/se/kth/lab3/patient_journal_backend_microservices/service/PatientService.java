@@ -19,7 +19,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final KafkaTemplate<String, PatientDTO> kafkaTemplate;
 
-    @Value("${kafka.topic.patient}")
+    @Value("${kafka.topic.patient:patient.events}")
     private String patientTopic;
 
     public PatientService(
@@ -38,12 +38,12 @@ public class PatientService {
         Patient savedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(savedPatient);
 
-        // Send event to Kafka
+        // Skicka event till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-            System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic);
+            System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic + " ===");
         } catch (Exception e) {
-            System.err.println("=== Kafka: Kunde inte skicka patient-händelse: " + e.getMessage());
+            System.err.println("=== Kafka: Kunde inte skicka patient-händelse: " + e.getMessage() + " ===");
         }
 
         return dto;
@@ -75,12 +75,12 @@ public class PatientService {
         Patient updatedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(updatedPatient);
 
-        // Send update event to Kafka
+        // Skicka uppdateringsevent till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-            System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic);
+            System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic + " ===");
         } catch (Exception e) {
-            System.err.println("=== Kafka: Kunde inte skicka patient-uppdaterings-händelse: " + e.getMessage());
+            System.err.println("=== Kafka: Kunde inte skicka patient-uppdaterings-händelse: " + e.getMessage() + " ===");
         }
 
         return dto;
