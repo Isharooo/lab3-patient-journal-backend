@@ -4,16 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * DTO för Kafka-kommandon för patient-operationer.
- *
- * Denna klass representerar meddelanden som skickas via Kafka.
- *
- * CommandType kan vara:
- * - "CREATE": Skapar en ny patient
- * - "UPDATE": Uppdaterar en befintlig patient
- * - "DELETE": Tar bort en patient
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

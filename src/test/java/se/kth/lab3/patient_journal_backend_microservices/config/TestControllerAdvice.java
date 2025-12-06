@@ -6,8 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-// @TestConfiguration gör att vi kan importera denna i specifika tester
-// @ControllerAdvice gör att den fångar exceptions
 @TestConfiguration
 @ControllerAdvice
 public class TestControllerAdvice {

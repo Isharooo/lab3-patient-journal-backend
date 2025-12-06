@@ -11,25 +11,6 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientDTO;
 /**
  * Controller för att hantera patienter via Kafka.
  *
- * Detta uppfyller Lab3-kravet: "göra om minst ett rest api till att bli strömmande via Kafka.
- * Det betyder att den ska anropas via Kafka istället för Rest."
- *
- * SKILLNAD MOT VANLIG REST (/api/patients):
- *
- * REST (synkront):
- *   POST /api/patients → PatientService.createPatient() → Databas → Returnerar skapad patient
- *
- * KAFKA (asynkront):
- *   POST /api/kafka/patients → Skickar till Kafka topic → Returnerar 202 Accepted
- *                                    ↓
- *                          PatientCommandConsumer lyssnar
- *                                    ↓
- *                          Skapar patient i databas
- *
- * Fördelen med Kafka-flödet:
- * - Asynkront: Klienten behöver inte vänta på att operationen slutförs
- * - Skalbart: Flera consumers kan bearbeta meddelanden parallellt
- * - Pålitligt: Meddelanden lagras i Kafka och kan hanteras om consumer är nere
  */
 @RestController
 @RequestMapping("/api/kafka/patients")
@@ -43,7 +24,7 @@ public class PatientKafkaController {
     private static final String TOPIC = "patient.commands";
 
     /**
-     * Skapar en patient via Kafka (asynkront).
+     * Skapar en patient via Kafka.
      *
      * Istället för att direkt anropa PatientService, skickas ett kommando
      * till Kafka topic "patient.commands". PatientCommandConsumer lyssnar
@@ -51,11 +32,6 @@ public class PatientKafkaController {
      */
     @PostMapping
     public ResponseEntity<String> createPatientViaKafka(@RequestBody PatientDTO patientDTO) {
-        log.info("========================================");
-        log.info("=== KAFKA PRODUCER: Skickar CREATE ===");
-        log.info("=== Patient: {} {} ===", patientDTO.getFirstName(), patientDTO.getLastName());
-        log.info("========================================");
-
         PatientCommandDTO command = new PatientCommandDTO("CREATE", null, patientDTO);
 
         commandKafkaTemplate.send(TOPIC, command);
@@ -67,17 +43,12 @@ public class PatientKafkaController {
     }
 
     /**
-     * Uppdaterar en patient via Kafka (asynkront).
+     * Uppdaterar en patient via Kafka.
      */
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePatientViaKafka(
             @PathVariable Long id,
             @RequestBody PatientDTO patientDTO) {
-
-        log.info("========================================");
-        log.info("=== KAFKA PRODUCER: Skickar UPDATE ===");
-        log.info("=== Patient ID: {} ===", id);
-        log.info("========================================");
 
         PatientCommandDTO command = new PatientCommandDTO("UPDATE", id, patientDTO);
 
@@ -89,15 +60,10 @@ public class PatientKafkaController {
     }
 
     /**
-     * Tar bort en patient via Kafka (asynkront).
+     * Tar bort en patient via Kafka.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePatientViaKafka(@PathVariable Long id) {
-        log.info("========================================");
-        log.info("=== KAFKA PRODUCER: Skickar DELETE ===");
-        log.info("=== Patient ID: {} ===", id);
-        log.info("========================================");
-
         PatientCommandDTO command = new PatientCommandDTO("DELETE", id, null);
 
         commandKafkaTemplate.send(TOPIC, id.toString(), command);

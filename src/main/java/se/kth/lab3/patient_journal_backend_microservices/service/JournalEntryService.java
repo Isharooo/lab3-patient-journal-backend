@@ -86,7 +86,6 @@ public class JournalEntryService {
         JournalEntry updatedEntry = journalEntryRepository.save(entry);
         JournalEntryDTO dto = convertToDTO(updatedEntry);
 
-        // Skicka uppdateringsevent till Kafka
         try {
             kafkaTemplate.send(journalTopic, dto.getPatientId().toString(), dto);
             System.out.println("=== Kafka: Skickade journal-uppdaterings-händelse till topic: " + journalTopic + " ===");

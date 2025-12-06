@@ -36,6 +36,5 @@ class PatientJournalBackendMicroservicesApplicationTests {
 
     @Test
     void contextLoads() {
-        // Nu bör kontexten ladda utan problem!
     }
 }

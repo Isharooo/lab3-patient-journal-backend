@@ -38,7 +38,6 @@ public class PatientService {
         Patient savedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(savedPatient);
 
-        // Skicka event till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
             System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic + " ===");
@@ -75,7 +74,6 @@ public class PatientService {
         Patient updatedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(updatedPatient);
 
-        // Skicka uppdateringsevent till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
             System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic + " ===");

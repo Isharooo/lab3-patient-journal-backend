@@ -45,7 +45,6 @@ class JournalEntryServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Sätt Kafka topic för tester
         ReflectionTestUtils.setField(journalEntryService, "journalTopic", "test-journal-events");
 
         testPatient = new Patient(

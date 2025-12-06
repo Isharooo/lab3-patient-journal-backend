@@ -12,18 +12,12 @@ import se.kth.lab3.patient_journal_backend_microservices.repository.PatientRepos
 /**
  * Kafka Consumer som lyssnar på patient.commands topic.
  *
- * Detta uppfyller Lab3-kravet: "göra om minst ett rest api till att bli strömmande via Kafka.
- * Det betyder att den ska anropas via Kafka istället för Rest."
- *
  * FLÖDET:
  * 1. PatientKafkaController tar emot HTTP-request och skickar kommando till Kafka topic
  * 2. Denna consumer LYSSNAR på Kafka topic "patient.commands"
  * 3. När meddelande kommer → Consumer utför operationen (CREATE/UPDATE/DELETE)
  * 4. Patient skapas/uppdateras/tas bort baserat på Kafka-meddelandet
  *
- * SKILLNAD MOT REST:
- * - REST: Synkront - PatientController → PatientService → Databas → Svar
- * - Kafka: Asynkront - Controller → Kafka Topic → Consumer → Databas (inget direkt svar)
  */
 @Service
 @RequiredArgsConstructor
@@ -44,10 +38,6 @@ public class PatientCommandConsumer {
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handlePatientCommand(PatientCommandDTO command) {
-        log.info("========================================");
-        log.info("=== KAFKA CONSUMER: Mottog kommando ===");
-        log.info("=== Typ: {} ===", command.getCommandType());
-        log.info("========================================");
 
         try {
             switch (command.getCommandType().toUpperCase()) {
