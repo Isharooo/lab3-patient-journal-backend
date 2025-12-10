@@ -38,9 +38,10 @@ public class PatientService {
         Patient savedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(savedPatient);
 
+        // Skicka event till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-            System.out.println("=== Kafka: Skickade patient-händelse till topic: " + patientTopic + " ===");
+            System.out.println("=== Kafka: Skickade patient-händelse (CREATE) till topic: " + patientTopic + " ===");
         } catch (Exception e) {
             System.err.println("=== Kafka: Kunde inte skicka patient-händelse: " + e.getMessage() + " ===");
         }
@@ -74,11 +75,12 @@ public class PatientService {
         Patient updatedPatient = patientRepository.save(patient);
         PatientDTO dto = convertToDTO(updatedPatient);
 
+        // Skicka uppdatering till Kafka
         try {
             kafkaTemplate.send(patientTopic, dto.getId().toString(), dto);
-            System.out.println("=== Kafka: Skickade patient-uppdaterings-händelse till topic: " + patientTopic + " ===");
+            System.out.println("=== Kafka: Skickade patient-händelse (UPDATE) till topic: " + patientTopic + " ===");
         } catch (Exception e) {
-            System.err.println("=== Kafka: Kunde inte skicka patient-uppdaterings-händelse: " + e.getMessage() + " ===");
+            System.err.println("=== Kafka: Kunde inte skicka patient-händelse: " + e.getMessage() + " ===");
         }
 
         return dto;
@@ -89,6 +91,14 @@ public class PatientService {
             throw new RuntimeException("Patient med ID " + id + " finns inte");
         }
         patientRepository.deleteById(id);
+
+        // Skicka "tombstone" (null-värde) till Kafka för att signalera borttagning
+        try {
+            kafkaTemplate.send(patientTopic, id.toString(), null);
+            System.out.println("=== Kafka: Skickade patient-händelse (DELETE/Tombstone) till topic: " + patientTopic + " ===");
+        } catch (Exception e) {
+            System.err.println("=== Kafka: Kunde inte skicka delete-händelse: " + e.getMessage() + " ===");
+        }
     }
 
     private PatientDTO convertToDTO(Patient patient) {
