@@ -8,8 +8,8 @@ import se.kth.lab3.patient_journal_backend_microservices.dto.PatientCommandDTO;
 import se.kth.lab3.patient_journal_backend_microservices.service.PatientService;
 
 /**
- * Kafka Consumer som hanterar kommandon för patienter.
- * Uppfyller kravet för högre betyg genom att möjliggöra asynkron hantering via Kafka.
+ * Kafka Consumer som hanterar kommandon for patienter.
+ * Uppfyller kravet for hogre betyg genom att moijliggora asynkron hantering via Kafka.
  */
 @Service
 @RequiredArgsConstructor
@@ -17,7 +17,7 @@ import se.kth.lab3.patient_journal_backend_microservices.service.PatientService;
 public class PatientCommandConsumer {
 
     // VIKTIGT: Vi använder Service, inte Repository.
-    // Detta gör att när en patient skapas här, skickas OCKSÅ ett event till Search Service.
+    // Detta gor att när en patient skapas här, skickas OCKSa ett event till Search Service.
     private final PatientService patientService;
 
     @KafkaListener(
@@ -26,7 +26,7 @@ public class PatientCommandConsumer {
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handlePatientCommand(PatientCommandDTO command) {
-        log.info("Mottog Kafka-kommando: {} för patient-ID: {}", command.getCommandType(), command.getPatientId());
+        log.info("Mottog Kafka-kommando: {} for patient-ID: {}", command.getCommandType(), command.getPatientId());
 
         try {
             switch (command.getCommandType().toUpperCase()) {

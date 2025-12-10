@@ -24,10 +24,10 @@ import java.util.Map;
 
 @Configuration
 @EnableKafka
-// VIKTIGT: @DependsOn("embeddedKafkaBroker") är borta!
+// VIKTIGT: @DependsOn("embeddedKafkaBroker") ar borta!
 public class KafkaConfig {
 
-    // Hämtar URL från application.properties (där vi pekar på kafka-service1)
+    // Hamtar URL fran application.properties (dar vi pekar pa kafka-service1)
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 

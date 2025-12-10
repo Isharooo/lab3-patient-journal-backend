@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // ANPASSAT: Här sätter vi din specifika frontend-URL som default
+    // ANPASSAT: Har satter vi din specifika frontend-URL som default
     @Value("${app.frontend.url:https://lab3-frontend1.app.cloud.cbh.kth.se}")
     private String frontendUrl;
 
@@ -88,7 +88,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ANPASSAT: Tillåter din frontend från cbhcloud + localhost för test
+        // ANPASSAT: Tillater din frontend fran cbhcloud + localhost for test
         configuration.setAllowedOrigins(List.of(
                 frontendUrl,
                 "http://localhost:5173",

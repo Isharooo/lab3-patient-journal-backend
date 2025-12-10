@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/journal-entries")
 @RequiredArgsConstructor
-// OBS: @CrossOrigin borttagen här
+// OBS: @CrossOrigin borttagen har
 public class JournalEntryController {
 
     private final JournalEntryService journalEntryService;
