@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/journal-entries")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+// OBS: @CrossOrigin borttagen här
 public class JournalEntryController {
 
     private final JournalEntryService journalEntryService;
@@ -56,7 +56,3 @@ public class JournalEntryController {
         return ResponseEntity.noContent().build();
     }
 }
-
-
-
-

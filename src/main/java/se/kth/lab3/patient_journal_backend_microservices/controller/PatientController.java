@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+// OBS: @CrossOrigin borttagen här för att SecurityConfig ska styra
 public class PatientController {
 
     private final PatientService patientService;
